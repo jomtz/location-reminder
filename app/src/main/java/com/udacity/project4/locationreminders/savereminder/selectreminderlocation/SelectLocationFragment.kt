@@ -2,7 +2,9 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 
 import android.Manifest
+import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -40,6 +42,7 @@ class SelectLocationFragment : BaseFragment() {
     private val callback = OnMapReadyCallback { gMap ->
         Log.e("OnMapReadyCallback", "OnMapReadyCallback")
         googleMap = gMap
+        setMapStyle(googleMap)
         enableMyLocation()
         setPoiClick(googleMap)
         setMapClick(googleMap)
@@ -155,6 +158,22 @@ class SelectLocationFragment : BaseFragment() {
                 MarkerOptions()
                     .position(latLng)
             )
+        }
+    }
+
+    private fun setMapStyle(map: GoogleMap) {
+        try {
+            val success = map.setMapStyle(
+                MapStyleOptions.loadRawResourceStyle(
+                    context,
+                    R.raw.map_style
+                )
+            )
+            if (!success) {
+                Log.e(TAG, "Style parsing failed.")
+            }
+        } catch (e: Resources.NotFoundException) {
+            Log.e(TAG, "Can't find style. Error: ", e)
         }
     }
 }
