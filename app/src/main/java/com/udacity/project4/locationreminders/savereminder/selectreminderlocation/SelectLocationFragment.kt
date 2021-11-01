@@ -20,6 +20,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.NavHostFragment.findNavController
 import androidx.navigation.fragment.findNavController
 import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
@@ -27,6 +28,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MapStyleOptions
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
@@ -50,6 +52,9 @@ private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 class SelectLocationFragment : BaseFragment() {
 
     private lateinit var googleMap: GoogleMap
+
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
+
     private lateinit var binding: FragmentSelectLocationBinding
 
     //Use Koin to get the view model of the SaveReminder
@@ -63,6 +68,7 @@ class SelectLocationFragment : BaseFragment() {
         googleMap = gMap
         setMapStyle(googleMap)
         requestForegroundAndBackgroundLocationPermissions()
+        zoomToLocation()
         setPoiClick(googleMap)
         setMapClick(googleMap)
     }
@@ -80,6 +86,9 @@ class SelectLocationFragment : BaseFragment() {
         setDisplayHomeAsUpEnabled(true)
         val mapFragment = childFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(callback)
+        fusedLocationProviderClient =
+            LocationServices.getFusedLocationProviderClient(requireContext())
+
         return binding.root
     }
 
@@ -144,10 +153,6 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        Log.i("onStart","foregroundAndBackgroundLocationPermission")
-    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -155,6 +160,23 @@ class SelectLocationFragment : BaseFragment() {
             checkDeviceLocationSettingsAndStartGeofence(false)
         }
     }
+
+    @SuppressLint("MissingPermission")
+    fun zoomToLocation() {
+        fusedLocationProviderClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
+            if (location != null) {
+                val userLatLng = LatLng(location.latitude, location.longitude)
+                val zoomLevel = 17.0f
+                googleMap.moveCamera(
+                    CameraUpdateFactory.newLatLngZoom(
+                        userLatLng,
+                        zoomLevel
+                    )
+                )
+            }
+        }
+    }
+
 
     /*
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
@@ -249,16 +271,6 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
-    /*
-         * Adds a Geofence for the current clue if needed, and removes any existing Geofence. This
-         * method should be called after the user has granted the location permission.  If there are
-         * no more geofences, we remove the geofence and let the viewmodel know that the ending hint
-         * is now "active."
-         */
-    @SuppressLint("MissingPermission")
-    private fun addGeofenceForClue() {
-
-    }
 
     private fun setPoiClick(map: GoogleMap) {
         map.setOnPoiClickListener { poi ->
@@ -286,7 +298,7 @@ class SelectLocationFragment : BaseFragment() {
                 findNavController().popBackStack()
             }
 
-            val cameraUpdate = CameraUpdateFactory.newLatLngZoom(it, 15f)
+            val cameraUpdate = CameraUpdateFactory.newLatLngZoom(it, 17.0f)
             map.moveCamera(cameraUpdate)
             val poiMarker = map.addMarker(MarkerOptions().position(it))
             poiMarker.showInfoWindow()
