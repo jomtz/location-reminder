@@ -49,7 +49,6 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         }
     }
 
-    //TODO: get the request id of the current geofence
     @SuppressLint("LongLogTag")
     private fun sendNotification(triggeringGeofences: List<Geofence>) {
         val requestId = when {
