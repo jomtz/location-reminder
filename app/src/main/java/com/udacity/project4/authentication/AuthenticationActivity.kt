@@ -36,11 +36,11 @@ class AuthenticationActivity : AppCompatActivity() {
             // If the user was authenticated, send him to RemindersActivity
             if (authenticationState == LoginViewModel.AuthenticationState.AUTHENTICATED) {
 
-                binding.loginButton.setOnClickListener { remindersActivityIntent() }
+                binding.login.setOnClickListener { remindersActivityIntent() }
 
             } else if (authenticationState == LoginViewModel.AuthenticationState.UNAUTHENTICATED) {
 
-                binding.loginButton.setOnClickListener { launchSignInFlow() }
+                binding.login.setOnClickListener { launchSignInFlow() }
             }
         })
 
