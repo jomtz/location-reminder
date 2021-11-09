@@ -46,7 +46,7 @@ class SaveReminderViewModelTest {
 
 
     @Test
-    fun completeLoading() = mainCoroutineRule.runBlockingTest {
+    fun check_loading() = mainCoroutineRule.runBlockingTest {
         mainCoroutineRule.pauseDispatcher()
         val reminderDataItem = ReminderDataItem(
             "Test Reminder",
@@ -70,7 +70,7 @@ class SaveReminderViewModelTest {
     }
 
     @Test
-    fun returnErrorTest() = mainCoroutineRule.runBlockingTest {
+    fun shouldReturnError() = mainCoroutineRule.runBlockingTest {
         val reminderDataItem = ReminderDataItem(
             "",
             "Test Description",

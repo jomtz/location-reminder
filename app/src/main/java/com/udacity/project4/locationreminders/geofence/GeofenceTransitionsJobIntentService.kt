@@ -49,7 +49,6 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         }
     }
 
-    @SuppressLint("LongLogTag")
     private fun sendNotification(triggeringGeofences: List<Geofence>) {
         val requestId = when {
             triggeringGeofences.isNotEmpty() ->
