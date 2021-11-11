@@ -70,7 +70,7 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
                 reminderDTO
             )
             showLoading.value = false
-            showToast.value = app.getString(R.string.reminder_saved)
+            showSnackBar.value = app.getString(R.string.reminder_saved)
             navigationCommand.value = NavigationCommand.Back
         }
         return reminderDTO

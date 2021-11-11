@@ -35,7 +35,6 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         }
     }
 
-    @SuppressLint("LongLogTag")
     override fun onHandleWork(intent: Intent) {
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
         if (geofencingEvent.hasError()) {
