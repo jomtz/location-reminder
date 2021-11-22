@@ -1,33 +1,31 @@
 package com.udacity.project4
 
 import android.app.Application
+import android.icu.lang.UProperty.NAME
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.espresso.Espresso
 import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
-import androidx.test.espresso.matcher.RootMatchers
+import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers
-import androidx.test.espresso.matcher.ViewMatchers.withId
+import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
-import androidx.test.rule.ActivityTestRule
-import com.udacity.project4.authentication.AuthenticationActivity
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.local.LocalDB
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.RemindersListViewModel
+import com.udacity.project4.locationreminders.savereminder.SaveReminderFragment.Companion.buildToastMessage
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
-import org.hamcrest.CoreMatchers
 import org.junit.After
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -36,6 +34,7 @@ import org.koin.core.context.stopKoin
 import org.koin.dsl.module
 import org.koin.test.AutoCloseKoinTest
 import org.koin.test.get
+import java.util.jar.Attributes
 
 @RunWith(AndroidJUnit4::class)
 @LargeTest
@@ -122,6 +121,28 @@ class RemindersActivityTest :
                 .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
             activityScenario.close()
 
+        }
+
+    /** Test Toast is displayed after Saving on Database **/
+        @Test
+        fun addReminderToDB_Toast()  {
+            val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
+            dataBindingIdlingResource.monitorActivity(activityScenario)
+
+            Espresso.onView(withId(R.id.addReminderFAB)).perform(ViewActions.click())
+            Espresso.onView(withId(R.id.reminderTitle))
+                .perform(ViewActions.replaceText("Simple reminder"))
+            Espresso.onView(withId(R.id.reminderDescription))
+                .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
+            Espresso.onView(withId(R.id.saveReminder)).perform(ViewActions.click())
+
+            Espresso.onView(
+                withText(
+                    buildToastMessage("Reminder Added !")))
+                .inRoot(ToastMatcher())
+                .check(matches(isDisplayed()))
+
+            activityScenario.close()
         }
 
         /** Test Snackbar is displayed after Error **/

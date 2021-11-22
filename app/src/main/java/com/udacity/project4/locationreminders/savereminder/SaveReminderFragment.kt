@@ -3,7 +3,6 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
 import android.app.PendingIntent
 import android.content.ContentValues
 import android.content.ContentValues.TAG
@@ -17,10 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityCompat.requestPermissions
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.observe
-import com.google.android.gms.auth.api.signin.GoogleSignIn.requestPermissions
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Geofence.NEVER_EXPIRE
@@ -36,7 +32,6 @@ import com.udacity.project4.locationreminders.savereminder.selectreminderlocatio
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
-import java.util.concurrent.TimeUnit
 
 
 class SaveReminderFragment : BaseFragment() {
@@ -82,9 +77,6 @@ class SaveReminderFragment : BaseFragment() {
 
         checkDeviceLocationSettingsAndStartGeofence()
 
-        _viewModel.showToast.observe(requireActivity()) {
-            Toast.makeText(requireContext(), "it", Toast.LENGTH_SHORT).show()
-        }
 
     }
 
@@ -114,6 +106,7 @@ class SaveReminderFragment : BaseFragment() {
                 )
             )
 
+            showToast(buildToastMessage("Reminder Added !"))
 
 
             locationSettingsResponseTask.addOnFailureListener { exception ->
@@ -200,4 +193,15 @@ class SaveReminderFragment : BaseFragment() {
         //make sure to clear the view model after destroy, as it's a single view model.
         _viewModel.onClear()
     }
+
+    private fun showToast(message: String){
+        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    }
+
+    companion object{
+        fun buildToastMessage(message: String): String{
+            return message
+        }
+    }
 }
+
