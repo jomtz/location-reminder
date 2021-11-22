@@ -1,12 +1,15 @@
 package com.udacity.project4.locationreminders.geofence
 
 import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.core.app.JobIntentService
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.Geofence
 import com.google.android.gms.location.GeofencingEvent
+import com.udacity.project4.R
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
@@ -35,19 +38,43 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         }
     }
 
+    @SuppressLint("LongLogTag")
     override fun onHandleWork(intent: Intent) {
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
+
         if (geofencingEvent.hasError()) {
             val errorMessage = geofencingEvent.errorCode
             Log.e(TAG, errorMessage.toString())
             return
         }
-        if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER || geofencingEvent.geofenceTransition ==Geofence.GEOFENCE_TRANSITION_DWELL) {
+        if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
+            geofencingEvent.geofenceTransition ==Geofence.GEOFENCE_TRANSITION_DWELL) {
             Log.e(TAG, "GEOFENCE TRANSITION ENTER")
+            val fenceId = when {
+                geofencingEvent.triggeringGeofences.isNotEmpty() ->
+                    geofencingEvent.triggeringGeofences[0].requestId
+                else -> {
+                    Log.e(TAG, "No Geofence Trigger Found!")
+                    return
+                }
+            }
+            val foundIndex = GeofencingConstants.LANDMARK_DATA.indexOfFirst {
+                it.id == fenceId
+            }
+            if (-1 == foundIndex) {
+                Log.e(TAG, "Unknown Geofence")
+                return
+                }
+            ContextCompat.getSystemService(
+            this.applicationContext,
+            NotificationManager::class.java
+        ) as NotificationManager
+
             sendNotification(geofencingEvent.triggeringGeofences)
         }
     }
 
+    @SuppressLint("LongLogTag")
     private fun sendNotification(triggeringGeofences: List<Geofence>) {
         val requestId = when {
             triggeringGeofences.isNotEmpty() ->

@@ -40,4 +40,11 @@
     <string name="geofence_too_many_geofences">Your app has registered too many geofences.</string>
     <string name="geofence_too_many_pending_intents">You have provided too many PendingIntents to the addGeofences() call.</string>
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
+    <string name="unknown_geofence_error">Unknown error: the Geofence service is not available now</string>
+
+    <!-- Geofence Locations -->
+    <string name="golden_gate_bridge_location">at the Golden Gate bridge</string>
+    <string name="union_square_location">in Union Square</string>
+    <string name="golden_gate_bridge_hint">Go to a bridge with a name that does not match the color that it is!</string>
+    <string name="union_square_hint">Go to a square named after Civil War rallies held there, but now known for its amazing shopping!</string>
 </resources>
