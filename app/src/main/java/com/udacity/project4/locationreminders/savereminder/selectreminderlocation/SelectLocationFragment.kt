@@ -39,14 +39,15 @@ import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
+import kotlinx.android.synthetic.main.fragment_select_location.*
 import org.koin.android.ext.android.inject
 
 private const val LOCATION_PERMISSION_INDEX = 0
 private const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
 private const val REQUEST_LOCATION_PERMISSION = 1
-private const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
-private const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
+const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
 
 
 class SelectLocationFragment : BaseFragment() {
@@ -67,10 +68,10 @@ class SelectLocationFragment : BaseFragment() {
         Log.e("OnMapReadyCallback", "OnMapReadyCallback")
         googleMap = gMap
         setMapStyle(googleMap)
-        requestForegroundAndBackgroundLocationPermissions()
-        zoomToLocation()
-        setPoiClick(googleMap)
         setMapClick(googleMap)
+        askPermissionAndMoveLocation()
+        setPoiClick(googleMap)
+
     }
 
     override fun onCreateView(
@@ -149,7 +150,7 @@ class SelectLocationFragment : BaseFragment() {
                     })
                 }.show()
         } else {
-            checkDeviceLocationSettingsAndStartGeofence()
+            moveToCurrentLocation()
         }
     }
 
@@ -160,6 +161,19 @@ class SelectLocationFragment : BaseFragment() {
             checkDeviceLocationSettingsAndStartGeofence(false)
         }
     }
+
+
+    private fun askPermissionAndMoveLocation() {
+        if (foregroundAndBackgroundLocationPermissionApproved()) {
+            moveToCurrentLocation()
+        } else {
+            requestForegroundAndBackgroundLocationPermissions()
+        }
+        return
+
+    }
+
+
 
     @SuppressLint("MissingPermission")
     fun zoomToLocation() {
@@ -177,6 +191,15 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
+    /** Request permissions and enable my location**/
+    private fun moveToCurrentLocation(){
+        if (ActivityCompat.checkSelfPermission(this.requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            requestForegroundAndBackgroundLocationPermissions()
+        } else {
+            googleMap.isMyLocationEnabled = true
+            zoomToLocation()
+        }
+    }
 
     /*
      *  Determines whether the app has the appropriate permissions across Android 10+ and all other
@@ -216,8 +239,7 @@ class SelectLocationFragment : BaseFragment() {
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
         Log.d(TAG, "Request foreground only location permission")
-        ActivityCompat.requestPermissions(
-            requireActivity(),
+        requestPermissions(
             permissionsArray,
             resultCode
         )
