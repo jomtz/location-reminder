@@ -31,4 +31,9 @@ class RemindersActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
+    companion object {
+        internal const val ACTION_GEOFENCE_EVENT =
+            "ReminderMainActivity.action.ACTION_GEOFENCE_EVENT"
+    }
 }
