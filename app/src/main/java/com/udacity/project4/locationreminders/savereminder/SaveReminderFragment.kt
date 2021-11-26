@@ -100,6 +100,9 @@ class SaveReminderFragment : BaseFragment() {
                 NavigationCommand.To(SaveReminderFragmentDirections.actionSaveReminderFragmentToSelectLocationFragment())
         }
         binding.saveReminder.setOnClickListener {
+            showToast(buildToastMessage("Saving Reminder !"))
+
+
             val title = _viewModel.reminderTitle.value
             val description = _viewModel.reminderDescription.value
             val location = _viewModel.reminderSelectedLocationStr.value
@@ -125,9 +128,9 @@ class SaveReminderFragment : BaseFragment() {
             )
 //            checkDeviceLocationSettingsAndStartGeofence(reminder)
             askPermissionAndMoveLocation(reminder)
-            showToast(buildToastMessage("Reminder Added !"))
 
         }
+
     }
 
 //    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?, reminder: ReminderDataItem) {

@@ -138,7 +138,7 @@ class RemindersActivityTest :
 
             Espresso.onView(
                 withText(
-                    buildToastMessage("Reminder Added !")))
+                    buildToastMessage("Saving Reminder !")))
                 .inRoot(ToastMatcher())
                 .check(matches(isDisplayed()))
 
