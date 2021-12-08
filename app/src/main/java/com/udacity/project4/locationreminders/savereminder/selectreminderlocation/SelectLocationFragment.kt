@@ -59,10 +59,6 @@ class SelectLocationFragment : BaseFragment() {
     //Use Koin to get the view model of the SaveReminder
     override val _viewModel: SaveReminderViewModel by inject()
 
-    private val runningQOrLater = android.os.Build.VERSION.SDK_INT >=
-            android.os.Build.VERSION_CODES.Q
-
-
 
     private val callback = OnMapReadyCallback { gMap ->
         Log.e("OnMapReadyCallback", "OnMapReadyCallback")
@@ -92,7 +88,7 @@ class SelectLocationFragment : BaseFragment() {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
-        geofencingClient = LocationServices.getGeofencingClient(requireActivity())
+//        geofencingClient = LocationServices.getGeofencingClient(requireActivity())
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)
@@ -142,18 +138,6 @@ class SelectLocationFragment : BaseFragment() {
         parentFragmentManager.popBackStack()
     }
 
-    /**onActivityResult*/
-
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
-//            checkDeviceLocationSettingsAndStartGeofence(false)
-//        }
-//    }
-
-
-
-
 
     /** Request permissions and enable my location**/
 
@@ -162,92 +146,12 @@ class SelectLocationFragment : BaseFragment() {
                 this.requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            requestLocationPermission()
+//            requestLocationPermission()
         } else {
             googleMap.isMyLocationEnabled = true
             zoomToLocation()
         }
     }
-    /*
-        * In all cases, we need to have the location permission.  On Android 10+ (Q) we need to have
-        * the background permission as well.
-        */
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        Log.d(TAG, "onRequestPermissionResult")
-
-        if (
-            grantResults.isEmpty() ||
-            grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
-            (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
-                    grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
-                    PackageManager.PERMISSION_DENIED))
-        {
-            Snackbar.make(
-                this.requireView(),
-                R.string.permission_denied_explanation,
-                Snackbar.LENGTH_INDEFINITE
-            )
-                .setAction(R.string.settings) {
-                    startActivity(Intent().apply {
-                        action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                        data = Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    })
-                }.show()
-        } else {
-            moveToCurrentLocation()
-        }
-    }
-
-    /*
-     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
-     *  Android versions.
-     */
-    @TargetApi(29)
-    private fun permissionApproved(): Boolean {
-
-        return (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION
-                        ))
-    }
-
-    /*
-     *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
-     */
-    @TargetApi(29 )
-    private fun requestLocationPermission() {
-        if (permissionApproved())
-            return
-        var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-
-        val showPermissionRationale = ActivityCompat.shouldShowRequestPermissionRationale(
-            requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION)
-
-        if(showPermissionRationale){
-            Snackbar.make( binding.root
-                , R.string.location_required_error
-                , Snackbar.LENGTH_INDEFINITE
-            ).setAction(R.string.permission_denied_explanation) {
-                requestPermissions( permissionsArray, REQUEST_LOCATION_PERMISSION) }
-                .setDuration(Snackbar.LENGTH_LONG)
-                .show()
-        }
-        Log.d(TAG, "Request foreground only location permission")
-        requestPermissions(
-            permissionsArray,
-            REQUEST_LOCATION_PERMISSION
-        )
-    }
-
-
 
 
     @SuppressLint("MissingPermission")
