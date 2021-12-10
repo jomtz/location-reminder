@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -16,12 +17,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Geofence.NEVER_EXPIRE
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -43,14 +49,13 @@ class SaveReminderFragment : BaseFragment() {
 
     private val REQUEST_TURN_DEVICE_LOCATION_ON = 1
 
+    private lateinit var binding: FragmentSaveReminderBinding
+    private lateinit var registerForActivityResult: ActivityResultLauncher<Intent>
+    lateinit var geofencingClient: GeofencingClient
+    private val runningQOrLater = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q
+
     //Get the view model this time as a single to be shared with the another fragment
     override val _viewModel: SaveReminderViewModel by inject()
-    private lateinit var binding: FragmentSaveReminderBinding
-
-    lateinit var geofencingClient: GeofencingClient
-
-    private val runningQOrLater = android.os.Build.VERSION.SDK_INT >=
-            android.os.Build.VERSION_CODES.Q
 
     private val geofencePendingIntent: PendingIntent by lazy {
         val intent = Intent(requireContext(), GeofenceBroadcastReceiver::class.java)
@@ -65,6 +70,7 @@ class SaveReminderFragment : BaseFragment() {
     ): View? {
         binding =
             DataBindingUtil.inflate(inflater, R.layout.fragment_save_reminder, container, false)
+
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
 
         setDisplayHomeAsUpEnabled(true)
@@ -86,7 +92,18 @@ class SaveReminderFragment : BaseFragment() {
         checkPermissionsAndStartGeofencing()
     }
 
-
+//    private fun registerForSignInResult() {
+//        registerForActivityResult = registerForActivityResult(
+//            ActivityResultContracts.StartActivityForResult()){ result: ActivityResult ->
+//            val response = IdpResponse.fromResultIntent(result.data)
+//            // Listen to the result of the sign - in process
+//            if(result.resultCode == Activity.RESULT_OK){
+//                Log.i(TAG, "User ${FirebaseAuth.getInstance().currentUser?.displayName} has signed in")
+//            } else {
+//                Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
+//            }
+//        }
+//    }
 
     /*
      * When we get the result from asking the user to turn on device location, we call
@@ -151,6 +168,7 @@ class SaveReminderFragment : BaseFragment() {
      * current hint isn't yet active.
      */
     private fun checkPermissionsAndStartGeofencing() {
+//        if (viewModel.geofenceIsActive()) return
         if (foregroundAndBackgroundLocationPermissionApproved()) {
             checkDeviceLocationSettingsAndStartGeofence()
         } else {
@@ -174,53 +192,60 @@ class SaveReminderFragment : BaseFragment() {
 
         geofencingClient = LocationServices.getGeofencingClient(requireActivity())
 
-        binding.saveReminder.setOnClickListener {
-            val title = _viewModel.reminderTitle.value
-            val description = _viewModel.reminderDescription.value
-            val location = _viewModel.reminderSelectedLocationStr.value
-            val latitude = _viewModel.latitude.value
-            val longitude = _viewModel.longitude.value
-            val reminderDTO = _viewModel.validateAndSaveReminder(
-                ReminderDataItem(
-                    title = title,
-                    description = description,
-                    latitude = latitude,
-                    longitude = longitude,
-                    location = location
-                )
-            )
 
-            showToast(buildToastMessage("Reminder Added !"))
-
-
-            locationSettingsResponseTask.addOnFailureListener { exception ->
-                if (exception is ResolvableApiException && resolve){
-                    try {
-                        exception.startResolutionForResult(
-                            requireActivity(),
-                            REQUEST_TURN_DEVICE_LOCATION_ON)
-                    } catch (sendEx: IntentSender.SendIntentException) {
-                        Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
-                    }
-                } else {
-                    Snackbar.make(
-                        binding.saveReminder,
-                        R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
-                    ).setAction(android.R.string.ok) {
-                        checkDeviceLocationSettingsAndStartGeofence()
-                    }.show()
+        locationSettingsResponseTask.addOnFailureListener { exception ->
+            if (exception is ResolvableApiException && resolve){
+                try {
+                    startIntentSenderForResult(
+                        exception.resolution.intentSender,
+                        REQUEST_TURN_DEVICE_LOCATION_ON,
+                        null,
+                        0,
+                        0,
+                        0,
+                        null)
+                } catch (sendEx: IntentSender.SendIntentException) {
+                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
                 }
+            } else {
+                Snackbar.make(
+                    binding.saveReminder,
+                    R.string.location_required_error,
+                    Snackbar.LENGTH_INDEFINITE
+                ).setAction(android.R.string.ok) {
+                    checkDeviceLocationSettingsAndStartGeofence()
+                }.show()
             }
+        }
 
-            locationSettingsResponseTask.addOnCompleteListener {
-                if ( it.isSuccessful ) {
+        locationSettingsResponseTask.addOnCompleteListener {
+            if ( it.isSuccessful ) {
+
+                binding.saveReminder.setOnClickListener {
+                    val title = _viewModel.reminderTitle.value
+                    val description = _viewModel.reminderDescription.value
+                    val location = _viewModel.reminderSelectedLocationStr.value
+                    val latitude = _viewModel.latitude.value
+                    val longitude = _viewModel.longitude.value
+                    val reminderDTO = _viewModel.validateAndSaveReminder(
+                        ReminderDataItem(
+                            title = title,
+                            description = description,
+                            latitude = latitude,
+                            longitude = longitude,
+                            location = location
+                        )
+                    )
+
                     if (reminderDTO != null) {
                         addGeofenceForClue(reminderDTO)
+                        showToast(buildToastMessage("Reminder Added !"))
+
                     }
                 }
             }
-
         }
+
     }
 
     /*
@@ -313,22 +338,22 @@ class SaveReminderFragment : BaseFragment() {
 
 //        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
 //            addOnCompleteListener {
-                geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent)?.run {
-                    addOnSuccessListener {
-//                        Toast.makeText(this@HuntMainActivity, R.string.geofences_added,
-//                            Toast.LENGTH_SHORT)
-//                            .show()
-//                        Log.e("Add Geofence", geofence.requestId)
-//                        viewModel.geofenceActivated()
-                    }
-                    addOnFailureListener {
-//                        Toast.makeText(this@HuntMainActivity, R.string.geofences_not_added,
-//                            Toast.LENGTH_SHORT).show()
-//                        if ((it.message != null)) {
-//                            Log.w(TAG, it.message)
-//                        }
-                    }
-                }
+        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
+            addOnSuccessListener {
+    //                        Toast.makeText(this@HuntMainActivity, R.string.geofences_added,
+    //                            Toast.LENGTH_SHORT)
+    //                            .show()
+    //                        Log.e("Add Geofence", geofence.requestId)
+    //                        viewModel.geofenceActivated()
+            }
+            addOnFailureListener {
+    //                        Toast.makeText(this@HuntMainActivity, R.string.geofences_not_added,
+    //                            Toast.LENGTH_SHORT).show()
+    //                        if ((it.message != null)) {
+    //                            Log.w(TAG, it.message)
+    //                        }
+            }
+        }
 //            }
 //        }
     }
