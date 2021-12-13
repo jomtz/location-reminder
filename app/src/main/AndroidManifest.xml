@@ -14,6 +14,9 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!--         The SYSTEM_ALERT_WINDOW permission is required for application overlay windows that
+    are displayed above all activity windows -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <application
         android:name=".MyApp"
         android:allowBackup="true"

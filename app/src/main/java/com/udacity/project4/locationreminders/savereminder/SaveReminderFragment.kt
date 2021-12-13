@@ -239,7 +239,7 @@ class SaveReminderFragment : BaseFragment() {
 
                     if (reminderDTO != null) {
                         addGeofenceForClue(reminderDTO)
-                        showToast(buildToastMessage("Reminder Added !"))
+                        showToast(buildToastMessage("Reminder Saved !"))
 
                     }
                 }
@@ -357,6 +357,7 @@ class SaveReminderFragment : BaseFragment() {
 //            }
 //        }
     }
+
 
 
     private fun showToast(message: String){

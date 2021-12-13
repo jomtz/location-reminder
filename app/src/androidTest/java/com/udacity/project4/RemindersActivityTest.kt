@@ -9,10 +9,14 @@ import androidx.test.espresso.IdlingRegistry
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.assertion.ViewAssertions
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.RootMatchers.isDialog
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.LargeTest
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.typeText
+import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import com.udacity.project4.locationreminders.RemindersActivity
 import com.udacity.project4.locationreminders.data.ReminderDataSource
 import com.udacity.project4.locationreminders.data.dto.ReminderDTO
@@ -24,6 +28,7 @@ import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.util.DataBindingIdlingResource
 import com.udacity.project4.util.monitorActivity
 import kotlinx.coroutines.runBlocking
+import org.hamcrest.CoreMatchers.allOf
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -96,14 +101,14 @@ class RemindersActivityTest :
             val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
             dataBindingIdlingResource.monitorActivity(activityScenario)
 
-            Espresso.onView(withId(R.id.noDataTextView)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            Espresso.onView(withId(R.id.addReminderFAB)).perform(ViewActions.click())
+            Espresso.onView(withId(R.id.noDataTextView)).check(matches(isDisplayed()))
+            Espresso.onView(withId(R.id.addReminderFAB)).perform(click())
             Espresso.onView(withId(R.id.reminderTitle))
                 .perform(ViewActions.replaceText("Simple reminder"))
             Espresso.onView(withId(R.id.reminderDescription))
                 .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
-            Espresso.onView(withId(R.id.selectLocation)).perform(ViewActions.click())
-            Espresso.onView(withId(R.id.map)).perform(ViewActions.click())
+            Espresso.onView(withId(R.id.selectLocation)).perform(click())
+            Espresso.onView(withId(R.id.map)).perform(click())
             Espresso.pressBack()
 
             repository.saveReminder(
@@ -115,10 +120,10 @@ class RemindersActivityTest :
                     0.0
                 )
             )
-            Espresso.onView(ViewMatchers.withText("Simple reminder"))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
-            Espresso.onView(ViewMatchers.withText("A place where you can maintain simplicity"))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+            Espresso.onView(withText("Simple reminder"))
+                .check(matches(isDisplayed()))
+            Espresso.onView(withText("A place where you can maintain simplicity"))
+                .check(matches(isDisplayed()))
             activityScenario.close()
 
         }
@@ -129,20 +134,22 @@ class RemindersActivityTest :
             val activityScenario = ActivityScenario.launch(RemindersActivity::class.java)
             dataBindingIdlingResource.monitorActivity(activityScenario)
 
-            Espresso.onView(withId(R.id.addReminderFAB)).perform(ViewActions.click())
-            Espresso.onView(withId(R.id.reminderTitle))
-                .perform(ViewActions.replaceText("Simple reminder"))
-            Espresso.onView(withId(R.id.reminderDescription))
-                .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
-            Espresso.onView(withId(R.id.saveReminder)).perform(ViewActions.click())
+        Espresso.onView(withId(R.id.addReminderFAB)).perform(click())
+        Espresso.onView(withId(R.id.reminderTitle))
+            .perform(ViewActions.replaceText("Simple reminder"))
+        Espresso.onView(withId(R.id.reminderDescription))
+            .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
+        Espresso.onView(withId(R.id.selectLocation)).perform(click())
+        Espresso.onView(withId(R.id.map)).perform(click())
+        Espresso.onView(withId(R.id.saveLocation)).perform(click())
+        Espresso.onView(withId(R.id.saveReminder)).perform(click())
 
-            Espresso.onView(
-                withText(
-                    buildToastMessage("Reminder Added !")))
-                .inRoot(ToastMatcher())
-                .check(matches(isDisplayed()))
+        Espresso.onView(
+            withText(buildToastMessage("Reminder Saved !")))
+            .inRoot(ToastMatcher())
+            .check(matches(isDisplayed()))
 
-            activityScenario.close()
+        activityScenario.close()
         }
 
         /** Test Snackbar is displayed after Error **/
@@ -152,16 +159,16 @@ class RemindersActivityTest :
             dataBindingIdlingResource.monitorActivity(activityScenario)
 
             // Click on the edit button, create, and save.
-            Espresso.onView(withId(R.id.addReminderFAB)).perform(ViewActions.click())
+            Espresso.onView(withId(R.id.addReminderFAB)).perform(click())
             Espresso.onView(withId(R.id.reminderTitle))
                 .perform(ViewActions.replaceText("Simple reminder"))
             Espresso.onView(withId(R.id.reminderDescription))
                 .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
-            Espresso.onView(withId(R.id.saveReminder)).perform(ViewActions.click())
+            Espresso.onView(withId(R.id.saveReminder)).perform(click())
 
             // Verify error snackbar is displayed on screen.
-            Espresso.onView(ViewMatchers.withText(R.string.err_select_location))
-                .check(ViewAssertions.matches(ViewMatchers.isDisplayed()))
+            Espresso.onView(withText(R.string.err_select_location))
+                .check(matches(isDisplayed()))
 
             activityScenario.close()
         }
