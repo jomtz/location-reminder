@@ -203,8 +203,8 @@ class SelectLocationFragment : BaseFragment() {
             }
             val poiMarker = map.addMarker(
                 MarkerOptions()
-                    .position(poi.latLng)
                     .title(poi.name)
+                    .position(poi.latLng)
             )
             poiMarker.showInfoWindow()
         }

@@ -42,6 +42,7 @@ import com.udacity.project4.locationreminders.savereminder.selectreminderlocatio
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
+import kotlinx.android.synthetic.main.fragment_save_reminder.*
 import org.koin.android.ext.android.inject
 
 
@@ -134,7 +135,7 @@ class SaveReminderFragment : BaseFragment() {
             grantResults[LOCATION_PERMISSION_INDEX] == PackageManager.PERMISSION_DENIED ||
             (requestCode == REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE &&
                     grantResults[BACKGROUND_LOCATION_PERMISSION_INDEX] ==
-                    PackageManager.PERMISSION_DENIED))
+                    PackageManager.PERMISSION_DENIED) )
         {
             Snackbar.make(
                 this.requireView(),
@@ -148,6 +149,12 @@ class SaveReminderFragment : BaseFragment() {
                         flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     })
                 }.show()
+
+            binding.selectLocation.setOnClickListener {
+                Toast.makeText(requireContext(), "Please go to settings to grant location permission",
+                    Toast.LENGTH_SHORT).show()
+            }
+
         } else {
             checkDeviceLocationSettingsAndStartGeofence()
         }
@@ -221,6 +228,7 @@ class SaveReminderFragment : BaseFragment() {
         locationSettingsResponseTask.addOnCompleteListener {
             if ( it.isSuccessful ) {
 
+                /** Move to addGeofenceForClue */
                 binding.saveReminder.setOnClickListener {
                     val title = _viewModel.reminderTitle.value
                     val description = _viewModel.reminderDescription.value
@@ -243,6 +251,7 @@ class SaveReminderFragment : BaseFragment() {
 
                     }
                 }
+
             }
         }
 
@@ -297,65 +306,40 @@ class SaveReminderFragment : BaseFragment() {
     @SuppressLint("MissingPermission")
         private fun addGeofenceForClue(reminder: ReminderDTO) {
 
-        //UNDONE
-
-//        if (viewModel.geofenceIsActive()) return
-//        val currentGeofenceIndex = viewModel.nextGeofenceIndex()
-//        if(currentGeofenceIndex >= GeofencingConstants.NUM_LANDMARKS) {
-//            removeGeofences()
-//            viewModel.geofenceActivated()
-//            return
-//        }
-//        val currentGeofenceData = GeofencingConstants.LANDMARK_DATA[currentGeofenceIndex]
-
-//        DONE
-
         val geofence = Geofence.Builder()
             .setRequestId(reminder.id)
             .setCircularRegion(
                 reminder.latitude!!,
                 reminder.longitude!!,
-                GeofencingConstants.GEOFENCE_RADIUS_IN_METERS
+                100f
             )
             .setExpirationDuration(NEVER_EXPIRE)
             .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
             .build()
 
-//       DONE
 
         val geofencingRequest = GeofencingRequest.Builder()
             .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
             .addGeofence(geofence)
             .build()
 
-        //TEMP
 
-//        if (ActivityCompat.checkSelfPermission(this.requireActivity(),
-//                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            requestForegroundAndBackgroundLocationPermissions()
-//            return
-//        }
-
-//        geofencingClient.removeGeofences(geofencePendingIntent)?.run {
-//            addOnCompleteListener {
         geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
             addOnSuccessListener {
-    //                        Toast.makeText(this@HuntMainActivity, R.string.geofences_added,
-    //                            Toast.LENGTH_SHORT)
-    //                            .show()
-    //                        Log.e("Add Geofence", geofence.requestId)
-    //                        viewModel.geofenceActivated()
+                Log.e("Added Geofence", geofence.requestId)
+
+
+
+
             }
             addOnFailureListener {
-    //                        Toast.makeText(this@HuntMainActivity, R.string.geofences_not_added,
-    //                            Toast.LENGTH_SHORT).show()
-    //                        if ((it.message != null)) {
-    //                            Log.w(TAG, it.message)
-    //                        }
+                Toast.makeText(requireContext(), R.string.geofences_not_added,
+                    Toast.LENGTH_SHORT).show()
+                if ((it.message != null)) {
+                    Log.w(TAG, it.message!!)
+                }
             }
         }
-//            }
-//        }
     }
 
 
