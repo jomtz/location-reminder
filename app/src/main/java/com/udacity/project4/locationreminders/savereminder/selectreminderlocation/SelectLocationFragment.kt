@@ -3,15 +3,10 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.annotation.TargetApi
 import android.content.ContentValues.TAG
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Resources
-import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
-import android.provider.Settings
 import android.util.Log
 import android.view.*
 import androidx.core.app.ActivityCompat
@@ -23,15 +18,12 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.*
-import com.google.android.material.snackbar.Snackbar
-import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.databinding.FragmentSelectLocationBinding
 import com.udacity.project4.locationreminders.savereminder.SaveReminderViewModel
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
-import com.google.android.gms.maps.model.CircleOptions
 
 import com.google.android.gms.maps.model.LatLng
 
@@ -61,18 +53,11 @@ class SelectLocationFragment : BaseFragment() {
 
 
     private val callback = OnMapReadyCallback { gMap ->
-        Log.e("OnMapReadyCallback", "OnMapReadyCallback")
-        //remove previous marks
+        Log.e("SelectLocationFragment", "OnMapReadyCallback")
+
         googleMap = gMap
-
-
-        val eiffel = LatLng(48.8589, 2.29365)
-        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(eiffel, 16F));
-
-        moveToCurrentLocation()
-
+        isPermissionGrantedAndEnableMyLocation()
         setMapStyle(googleMap)
-
         setPoiClick(googleMap)
         setMapClick(googleMap)
 
@@ -141,12 +126,13 @@ class SelectLocationFragment : BaseFragment() {
 
     /** Request permissions and enable my location**/
 
-    private fun moveToCurrentLocation(){
+    @SuppressLint("MissingPermission")
+    private fun isPermissionGrantedAndEnableMyLocation(){
         if (ActivityCompat.checkSelfPermission(
                 this.requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-//            requestLocationPermission()
+            return
         } else {
             googleMap.isMyLocationEnabled = true
             zoomToLocation()
