@@ -1,8 +1,10 @@
 package com.udacity.project4.locationreminders.geofence
 
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import com.udacity.project4.locationreminders.geofence.GeofenceTransitionsJobIntentService.Companion.enqueueWork
 
 /**
@@ -15,8 +17,14 @@ import com.udacity.project4.locationreminders.geofence.GeofenceTransitionsJobInt
  *
  */
 
+private val TAG = "GeofenceBroadcastReceiver"
+
 class GeofenceBroadcastReceiver : BroadcastReceiver() {
+    @SuppressLint("LongLogTag")
     override fun onReceive(context: Context, intent: Intent) {
+        Log.e(TAG, "onReceive")
         enqueueWork(context, intent)
+
     }
+
 }

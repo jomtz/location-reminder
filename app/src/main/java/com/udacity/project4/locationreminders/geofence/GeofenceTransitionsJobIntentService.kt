@@ -5,6 +5,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log
+import androidx.annotation.NonNull
 import androidx.core.app.JobIntentService
 import androidx.core.content.ContextCompat
 import com.google.android.gms.location.Geofence
@@ -34,14 +35,15 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
         fun enqueueWork(context: Context, intent: Intent) {
             enqueueWork(
                 context,
-                GeofenceTransitionsJobIntentService::class.java, JOB_ID,
+                GeofenceTransitionsJobIntentService::class.java,
+                JOB_ID,
                 intent
             )
         }
     }
 
     @SuppressLint("LongLogTag")
-    override fun onHandleWork(intent: Intent) {
+    override fun onHandleWork(@NonNull intent: Intent) {
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
 
         if (geofencingEvent.hasError()) {
@@ -49,27 +51,13 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
             Log.e(TAG, errorMessage.toString())
             return
         }
+
         if (geofencingEvent.geofenceTransition == Geofence.GEOFENCE_TRANSITION_ENTER ||
             geofencingEvent.geofenceTransition ==Geofence.GEOFENCE_TRANSITION_DWELL) {
             Log.v(TAG, getString(R.string.geofence_entered))
-            val fenceId = when {
-                geofencingEvent.triggeringGeofences.isNotEmpty() ->
-                    geofencingEvent.triggeringGeofences[0].requestId
-                else -> {
-                    Log.e(TAG, "No Geofence Trigger Found!")
-                    return
-                }
-            }
-            val foundIndex = GeofencingConstants.LANDMARK_DATA.indexOfFirst {
-                it.id == fenceId
-            }
-            if ( -1 == foundIndex ) {
-                Log.e(TAG, "Unknown Geofence")
-                return
-            }
-            ContextCompat.getSystemService(this.applicationContext, NotificationManager::class.java)
-                    as NotificationManager
 
+            ContextCompat.getSystemService(this.applicationContext, NotificationManager::class.java)
+                as NotificationManager
             sendNotification(geofencingEvent.triggeringGeofences)
 
         }
@@ -91,14 +79,14 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
             }
         }
 
-        if(requestId.isNullOrEmpty()) return
-        // Interaction to the repository has to be through a coroutine scope
+//        Interaction to the repository has to be through a coroutine scope
         CoroutineScope(coroutineContext).launch(SupervisorJob()) {
             //get the reminder with the request id
             val result = remindersLocalRepository.getReminder(requestId)
             if (result is Result.Success<ReminderDTO>) {
                 val reminderDTO = result.data
                 //send a notification to the user with the reminder details
+                Log.e(TAG, "SendNotification!")
                 sendNotification(
                     this@GeofenceTransitionsJobIntentService, ReminderDataItem(
                         reminderDTO.title,
@@ -111,6 +99,9 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
                 )
             }
         }
+//        if(requestId.isNullOrEmpty()) return
+
     }
+
 
 }
