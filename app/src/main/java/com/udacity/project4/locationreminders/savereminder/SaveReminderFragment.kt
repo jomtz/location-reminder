@@ -41,11 +41,13 @@ import com.udacity.project4.locationreminders.savereminder.selectreminderlocatio
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.LOCATION_PERMISSION_INDEX
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
+import com.udacity.project4.utils.sendNotification
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import kotlinx.android.synthetic.main.fragment_save_reminder.*
 import org.koin.android.ext.android.inject
 
 
+@SuppressLint("UnspecifiedImmutableFlag")
 class SaveReminderFragment : BaseFragment() {
 
     private val REQUEST_TURN_DEVICE_LOCATION_ON = 1
@@ -393,6 +395,7 @@ class SaveReminderFragment : BaseFragment() {
                 .build()
 
 
+
             geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
                 addOnSuccessListener {
                     Log.e("SaveReminderFragment: Added Geofence", geofence.requestId)
@@ -405,6 +408,17 @@ class SaveReminderFragment : BaseFragment() {
                             location = location
                         )
                     )
+
+                    /**
+                     * Test notification to implement on worker
+                     */
+                    sendNotification(requireContext(),ReminderDataItem(
+                        title = title,
+                        description = description,
+                        latitude = latitude,
+                        longitude = longitude,
+                        location = location
+                    ))
 
                 }
                 addOnFailureListener {

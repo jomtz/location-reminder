@@ -16,6 +16,8 @@ import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.data.dto.Result
 import com.udacity.project4.locationreminders.data.local.RemindersLocalRepository
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
+import com.udacity.project4.utils.NotificationHelper
+import com.udacity.project4.utils.getUniqueId
 import com.udacity.project4.utils.sendNotification
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
@@ -44,6 +46,7 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
     @SuppressLint("LongLogTag")
     override fun onHandleWork(@NonNull intent: Intent) {
+
         val geofencingEvent = GeofencingEvent.fromIntent(intent)
 
         if (geofencingEvent.hasError()) {
@@ -66,18 +69,24 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
 
     @SuppressLint("LongLogTag")
     private fun sendNotification(triggeringGeofences: List<Geofence>) {
-        val requestId = when {
-            triggeringGeofences.isNotEmpty() ->
-            {
-                Log.d(TAG, "sendNotification: " + triggeringGeofences[0].requestId)
-                triggeringGeofences[0].requestId
-            }
 
-            else -> {
-                Log.e(TAG, "No Geofence Trigger Found !")
-                return
-            }
-        }
+
+        val requestId = triggeringGeofences[0].requestId
+        Log.d(TAG, "sendNotification: " + triggeringGeofences[0].requestId)
+
+//        val requestId = when {
+//            triggeringGeofences.isNotEmpty() ->
+//            {
+//                Log.d(TAG, "sendNotification: " + triggeringGeofences[0].requestId)
+//                triggeringGeofences[0].requestId
+//
+//            }
+//
+//            else -> {
+//                Log.e(TAG, "No Geofence Trigger Found !")
+//                return
+//            }
+//        }
 
 //        Interaction to the repository has to be through a coroutine scope
         CoroutineScope(coroutineContext).launch(SupervisorJob()) {
@@ -98,8 +107,10 @@ class GeofenceTransitionsJobIntentService : JobIntentService(), CoroutineScope {
                     )
                 )
             }
+
         }
 //        if(requestId.isNullOrEmpty()) return
+
 
     }
 
