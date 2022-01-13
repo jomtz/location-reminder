@@ -73,7 +73,6 @@ class SelectLocationFragment : BaseFragment() {
 
         binding.viewModel = _viewModel
         binding.lifecycleOwner = this
-//        geofencingClient = LocationServices.getGeofencingClient(requireActivity())
 
         setHasOptionsMenu(true)
         setDisplayHomeAsUpEnabled(true)

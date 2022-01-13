@@ -3,7 +3,6 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
 import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -17,33 +16,25 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
-import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Geofence.NEVER_EXPIRE
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
 import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
-import com.udacity.project4.locationreminders.data.dto.ReminderDTO
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
-import com.udacity.project4.locationreminders.geofence.GeofencingConstants
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.BACKGROUND_LOCATION_PERMISSION_INDEX
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.LOCATION_PERMISSION_INDEX
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
 import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
-import com.udacity.project4.utils.sendNotification
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
-import kotlinx.android.synthetic.main.fragment_save_reminder.*
 import org.koin.android.ext.android.inject
 
 
@@ -94,19 +85,6 @@ class SaveReminderFragment : BaseFragment() {
 
         checkPermissionsAndStartGeofencing()
     }
-
-//    private fun registerForSignInResult() {
-//        registerForActivityResult = registerForActivityResult(
-//            ActivityResultContracts.StartActivityForResult()){ result: ActivityResult ->
-//            val response = IdpResponse.fromResultIntent(result.data)
-//            // Listen to the result of the sign - in process
-//            if(result.resultCode == Activity.RESULT_OK){
-//                Log.i(TAG, "User ${FirebaseAuth.getInstance().currentUser?.displayName} has signed in")
-//            } else {
-//                Log.i(TAG, "Sign in unsuccessful ${response?.error?.errorCode}")
-//            }
-//        }
-//    }
 
     /*
      * When we get the result from asking the user to turn on device location, we call
@@ -233,28 +211,7 @@ class SaveReminderFragment : BaseFragment() {
                     addGeofenceForReminder()
                     showToast(buildToastMessage("Reminder Saved !"))
                 }
-                /** Move to addGeofenceForClue add*/
-//                binding.saveReminder.setOnClickListener {
-//                    val title = _viewModel.reminderTitle.value
-//                    val description = _viewModel.reminderDescription.value
-//                    val location = _viewModel.reminderSelectedLocationStr.value
-//                    val latitude = _viewModel.latitude.value
-//                    val longitude = _viewModel.longitude.value
-//                    val reminderDTO = _viewModel.validateAndSaveReminder(
-//                        ReminderDataItem(
-//                            title = title,
-//                            description = description,
-//                            latitude = latitude,
-//                            longitude = longitude,
-//                            location = location
-//                        )
-//                    )
-//
-//                    if (reminderDTO != null) {
-//                        addGeofenceForClue(reminderDTO)
-//                        showToast(buildToastMessage("Reminder Saved !"))
-//                    }
-//                }
+
             }
         }
 
@@ -306,44 +263,6 @@ class SaveReminderFragment : BaseFragment() {
     }
 
 
-//    @SuppressLint("MissingPermission", "LongLogTag")
-//        private fun addGeofenceForClue(reminder: ReminderDTO) {
-//
-//        val geofence = Geofence.Builder()
-//            .setRequestId(reminder.id)
-//            .setCircularRegion(
-//                reminder.latitude!!,
-//                reminder.longitude!!,
-//                100f
-//            )
-//            .setExpirationDuration(NEVER_EXPIRE)
-//            .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
-//            .build()
-//
-//
-//        val geofencingRequest = GeofencingRequest.Builder()
-//            .setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER)
-//            .addGeofence(geofence)
-//            .build()
-//
-//
-//        geofencingClient.addGeofences(geofencingRequest, geofencePendingIntent).run {
-//            addOnSuccessListener {
-//                Log.e("Added Geofence", geofence.requestId)
-//
-//
-//
-//
-//            }
-//            addOnFailureListener {
-//                Toast.makeText(requireContext(), R.string.geofences_not_added,
-//                    Toast.LENGTH_SHORT).show()
-//                if ((it.message != null)) {
-//                    Log.w(TAG, it.message!!)
-//                }
-//            }
-//        }
-//    }
 
     @SuppressLint("MissingPermission", "LongLogTag")
     private fun addGeofenceForReminder() {
@@ -371,7 +290,6 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         if (
-//            reminderDataItem.title != null &&
             reminderDataItem.latitude != null &&
             reminderDataItem.longitude != null &&
             reminderDataItem.location != null
@@ -409,16 +327,7 @@ class SaveReminderFragment : BaseFragment() {
                         )
                     )
 
-                    /**
-                     * Test notification to implement on worker
-                     */
-                    sendNotification(requireContext(),ReminderDataItem(
-                        title = title,
-                        description = description,
-                        latitude = latitude,
-                        longitude = longitude,
-                        location = location
-                    ))
+
 
                 }
                 addOnFailureListener {
