@@ -92,11 +92,6 @@ class RemindersActivityTest : AutoCloseKoinTest() {
         IdlingRegistry.getInstance().unregister(dataBindingIdlingResource)
     }
 
-    @get:Rule
-    var activityTestRule: ActivityTestRule<RemindersActivity?>? = ActivityTestRule(
-        RemindersActivity::class.java
-    )
-    var activity: RemindersActivity? = activityTestRule!!.activity
 
     @Test
     fun addReminder() = runBlocking {
@@ -138,12 +133,12 @@ class RemindersActivityTest : AutoCloseKoinTest() {
         dataBindingIdlingResource.monitorActivity(activityScenario)
 
         // Click on the edit button, create, and save.
-        Espresso.onView(withId(R.id.addReminderFAB)).perform(click(),ViewActions.closeSoftKeyboard())
+        Espresso.onView(withId(R.id.addReminderFAB)).perform(click())
         Espresso.onView(withId(R.id.reminderTitle))
-            .perform(ViewActions.replaceText("Simple reminder"),ViewActions.closeSoftKeyboard())
+            .perform(ViewActions.replaceText("Simple reminder"))
         Espresso.onView(withId(R.id.reminderDescription))
-            .perform(ViewActions.replaceText("A place where you can maintain simplicity"),ViewActions.closeSoftKeyboard())
-        Espresso.onView(withId(R.id.saveReminder)).perform(click(),ViewActions.closeSoftKeyboard())
+            .perform(ViewActions.replaceText("A place where you can maintain simplicity"))
+        Espresso.onView(withId(R.id.saveReminder)).perform(click())
 
         // Verify error snackbar is displayed on screen.
         Espresso.onView(withText(R.string.err_select_location))
@@ -169,15 +164,11 @@ class RemindersActivityTest : AutoCloseKoinTest() {
         Espresso.onView(withId(R.id.saveReminder)).perform(click())
 
         // Replaced ToastMatcher with CoreMatcher
-        Espresso.onView(withText(R.string.reminder_saved)).inRoot(
-            RootMatchers.withDecorView(
-                CoreMatchers.not(
-                    CoreMatchers.`is`(
-                        activity?.window?.decorView
-                    )
-                )
-            )
-        ).check(matches(isDisplayed()))
+        Espresso.onView(
+            withText(R.string.reminder_saved))
+            .inRoot(ToastMatcher())
+            .check(matches(isDisplayed()))
+
 
         activityScenario.close()
     }
