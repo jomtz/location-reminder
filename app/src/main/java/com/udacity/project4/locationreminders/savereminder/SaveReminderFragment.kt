@@ -3,6 +3,7 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
+import android.app.Activity
 import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -16,13 +17,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Geofence.NEVER_EXPIRE
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -84,7 +89,9 @@ class SaveReminderFragment : BaseFragment() {
         }
 
         checkPermissionsAndStartGeofencing()
+
     }
+
 
     /*
      * When we get the result from asking the user to turn on device location, we call
@@ -97,6 +104,7 @@ class SaveReminderFragment : BaseFragment() {
         if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
             checkDeviceLocationSettingsAndStartGeofence(false)
         }
+
     }
 
     /*
@@ -155,7 +163,7 @@ class SaveReminderFragment : BaseFragment() {
      * current hint isn't yet active.
      */
     private fun checkPermissionsAndStartGeofencing() {
-//        if (viewModel.geofenceIsActive()) return
+        Log.e(TAG, "Check permissions and start geofencing")
         if (foregroundAndBackgroundLocationPermissionApproved()) {
             checkDeviceLocationSettingsAndStartGeofence()
         } else {
@@ -163,6 +171,27 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
+    /*
+     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+     *  Android versions.
+     */
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (runningQOrLater) {
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(
+                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
 
     /*
      *  Uses the Location Client to check the current state of location settings, and gives the user
@@ -209,36 +238,12 @@ class SaveReminderFragment : BaseFragment() {
             if ( it.isSuccessful ) {
                 binding.saveReminder.setOnClickListener {
                     addGeofenceForReminder()
-                    showToast(buildToastMessage("Reminder Saved !"))
                 }
 
             }
         }
 
     }
-
-    /*
-     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
-     *  Android versions.
-     */
-    @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION))
-        val backgroundPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
-            }
-        return foregroundLocationApproved && backgroundPermissionApproved
-    }
-
 
     /*
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
@@ -261,7 +266,6 @@ class SaveReminderFragment : BaseFragment() {
             resultCode
         )
     }
-
 
 
     @SuppressLint("MissingPermission", "LongLogTag")
@@ -326,9 +330,7 @@ class SaveReminderFragment : BaseFragment() {
                             location = location
                         )
                     )
-
-
-
+                    showToast(buildToastMessage("Reminder Saved !"))
                 }
                 addOnFailureListener {
                     Toast.makeText(
