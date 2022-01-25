@@ -3,12 +3,14 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -28,8 +30,6 @@ import org.koin.android.ext.android.inject
 import com.google.android.gms.maps.model.LatLng
 
 
-
-
 const val LOCATION_PERMISSION_INDEX = 0
 const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
@@ -40,6 +40,8 @@ private const val GEOFENCE_RADIUS = 200f
 
 
 class SelectLocationFragment : BaseFragment() {
+
+    private var permissionDenied = false
 
     private lateinit var googleMap: GoogleMap
 
@@ -56,7 +58,7 @@ class SelectLocationFragment : BaseFragment() {
         Log.e("SelectLocationFragment", "OnMapReadyCallback")
 
         googleMap = gMap
-        isPermissionGrantedAndEnableMyLocation()
+        enableMyLocation()
         setMapStyle(googleMap)
         setPoiClick(googleMap)
         setMapClick(googleMap)
@@ -123,20 +125,48 @@ class SelectLocationFragment : BaseFragment() {
     }
 
 
-    /** Request permissions and enable my location**/
-
+    /**
+     * Enables the My Location layer if the fine location permission has been granted.
+     */
     @SuppressLint("MissingPermission")
-    private fun isPermissionGrantedAndEnableMyLocation(){
-        if (ActivityCompat.checkSelfPermission(
-                this.requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            return
-        } else {
-            googleMap.isMyLocationEnabled = true
+    private fun enableMyLocation() {
+        if (!::googleMap.isInitialized) return
+        if (isPermissionGranted()) {
+
+            googleMap.setMyLocationEnabled(true)
             zoomToLocation()
+
+        } else {
+            // Permission to access the location is missing. Show rationale and request permission
+            ActivityCompat.requestPermissions(
+                this.requireContext() as Activity,
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
+                REQUEST_LOCATION_PERMISSION
+            )
         }
     }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        if (requestCode != REQUEST_LOCATION_PERMISSION) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+            return
+        }
+        if (isPermissionGranted()) {
+            // Enable the my location layer if the permission has been granted.
+            enableMyLocation()
+        } else {
+            // Permission was denied.
+            permissionDenied = true
+        }
+    }
+
+    private fun isPermissionGranted() : Boolean {
+        return ActivityCompat.checkSelfPermission(
+            this.requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+
 
 
     @SuppressLint("MissingPermission")
