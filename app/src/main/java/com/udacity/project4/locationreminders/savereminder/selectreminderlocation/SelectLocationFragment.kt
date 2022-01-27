@@ -33,9 +33,12 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.location.Location
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
+import android.service.autofill.Validators.or
 import android.text.BoringLayout.make
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.snackbar.Snackbar
 import com.udacity.project4.utils.PermissionUtils.requestPermission
@@ -139,20 +142,6 @@ class SelectLocationFragment : BaseFragment() {
     }
 
 
-    /** Request permissions and enable my location**/
-
-    @SuppressLint("MissingPermission")
-    private fun isPermissionGrantedAndEnableMyLocation(){
-        if (ActivityCompat.checkSelfPermission(
-                this.requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this.requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-
-//            googleMap.isMyLocationEnabled(true)
-            zoomToLocation()
-
-        }
-    }
 
     /**
      * Enables the My Location layer if the fine location permission has been granted.
@@ -181,14 +170,19 @@ class SelectLocationFragment : BaseFragment() {
     @SuppressLint("MissingPermission")
     private fun enableMyLocation() {
         if (isPermissionGranted()) {
-            googleMap.isMyLocationEnabled = true
+            googleMap.setMyLocationEnabled(true)
             zoomToLocation()
         } else {
             requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
                 REQUEST_LOCATION_PERMISSION
             )
         }
+    }
+
+    private fun isPermissionGranted(): Boolean {
+        return ContextCompat.checkSelfPermission(this.requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
     @SuppressLint("MissingPermission")
@@ -207,14 +201,10 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
-    private fun isPermissionGranted() : Boolean {
-        return ContextCompat.checkSelfPermission(
-            requireActivity(),
-            Manifest.permission.ACCESS_FINE_LOCATION) === PackageManager.PERMISSION_GRANTED
-    }
 
 
 
+    @SuppressLint("MissingPermission")
     override fun onRequestPermissionsResult(requestCode: Int,
                                             permissions: Array<String>, grantResults: IntArray) {
         when (requestCode) {
@@ -224,8 +214,11 @@ class SelectLocationFragment : BaseFragment() {
                 // If request is cancelled, the result arrays are empty.
                 if ((grantResults.isNotEmpty() &&
                             grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(requireContext(), "Permission already granted", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Permission was granted", Toast.LENGTH_SHORT).show()
+
                     enableMyLocation()
+
+
                     // Permission is granted. Continue the action or workflow
                     // in your app.
                 } else {
