@@ -3,7 +3,6 @@ package com.udacity.project4.locationreminders.savereminder
 import android.Manifest
 import android.annotation.SuppressLint
 import android.annotation.TargetApi
-import android.app.Activity
 import android.app.PendingIntent
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -17,17 +16,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
-import com.firebase.ui.auth.IdpResponse
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.location.Geofence.NEVER_EXPIRE
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.auth.FirebaseAuth
 import com.udacity.project4.BuildConfig
 import com.udacity.project4.R
 import com.udacity.project4.base.BaseFragment
@@ -35,12 +30,7 @@ import com.udacity.project4.base.NavigationCommand
 import com.udacity.project4.databinding.FragmentSaveReminderBinding
 import com.udacity.project4.locationreminders.geofence.GeofenceBroadcastReceiver
 import com.udacity.project4.locationreminders.reminderslist.ReminderDataItem
-import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.BACKGROUND_LOCATION_PERMISSION_INDEX
-import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.LOCATION_PERMISSION_INDEX
-import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
-import com.udacity.project4.locationreminders.savereminder.selectreminderlocation.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
 import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
-import kotlinx.android.synthetic.main.it_reminder.*
 import org.koin.android.ext.android.inject
 
 
@@ -195,27 +185,7 @@ class SaveReminderFragment : BaseFragment() {
         }
     }
 
-    /*
-     *  Determines whether the app has the appropriate permissions across Android 10+ and all other
-     *  Android versions.
-     */
-    @TargetApi(29)
-    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
-        val foregroundLocationApproved = (
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION))
-        val backgroundPermissionApproved =
-            if (runningQOrLater) {
-                PackageManager.PERMISSION_GRANTED ==
-                        ActivityCompat.checkSelfPermission(
-                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
-                        )
-            } else {
-                true
-            }
-        return foregroundLocationApproved && backgroundPermissionApproved
-    }
+
 
     /*
      *  Uses the Location Client to check the current state of location settings, and gives the user
@@ -279,6 +249,28 @@ class SaveReminderFragment : BaseFragment() {
     }
 
     /*
+ *  Determines whether the app has the appropriate permissions across Android 10+ and all other
+ *  Android versions.
+ */
+    @TargetApi(29)
+    private fun foregroundAndBackgroundLocationPermissionApproved(): Boolean {
+        val foregroundLocationApproved = (
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(requireContext(),
+                            Manifest.permission.ACCESS_FINE_LOCATION))
+        val backgroundPermissionApproved =
+            if (runningQOrLater) {
+                PackageManager.PERMISSION_GRANTED ==
+                        ActivityCompat.checkSelfPermission(
+                            requireContext(), Manifest.permission.ACCESS_BACKGROUND_LOCATION
+                        )
+            } else {
+                true
+            }
+        return foregroundLocationApproved && backgroundPermissionApproved
+    }
+
+    /*
      *  Requests ACCESS_FINE_LOCATION and (on Android 10+ (Q) ACCESS_BACKGROUND_LOCATION.
      */
     @TargetApi(29 )
@@ -286,14 +278,13 @@ class SaveReminderFragment : BaseFragment() {
         if (foregroundAndBackgroundLocationPermissionApproved())
             return
         var permissionsArray = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-        val resultCode = when {
+        val resultCode: Int = when {
             runningQOrLater -> {
                 permissionsArray += Manifest.permission.ACCESS_BACKGROUND_LOCATION
                 REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE
             }
             else -> REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
         }
-        Log.d(TAG, "Request foreground only location permission")
         requestPermissions(
             permissionsArray,
             resultCode
@@ -376,3 +367,7 @@ class SaveReminderFragment : BaseFragment() {
     }
 }
 
+const val LOCATION_PERMISSION_INDEX = 0
+const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
+const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
+const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34

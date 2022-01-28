@@ -3,15 +3,12 @@ package com.udacity.project4.locationreminders.savereminder.selectreminderlocati
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Notification
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.os.Bundle
 import android.util.Log
 import android.view.*
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.navigation.fragment.findNavController
@@ -29,30 +26,22 @@ import com.udacity.project4.utils.setDisplayHomeAsUpEnabled
 import org.koin.android.ext.android.inject
 
 import com.google.android.gms.maps.model.LatLng
-import android.content.DialogInterface
 import android.content.Intent
-import android.location.Location
+import android.content.IntentSender
 import android.net.Uri
-import android.os.Build
 import android.provider.Settings
-import android.service.autofill.Validators.or
-import android.text.BoringLayout.make
 import android.widget.Toast
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AlertDialog
+import androidx.core.app.ActivityCompat
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.material.snackbar.Snackbar
-import com.udacity.project4.utils.PermissionUtils.requestPermission
-import com.google.gson.internal.`$Gson$Types`.arrayOf
 import com.udacity.project4.BuildConfig
-import com.udacity.project4.utils.PermissionUtils.isPermissionGranted
+import com.udacity.project4.locationreminders.savereminder.LOCATION_PERMISSION_INDEX
+import com.udacity.project4.locationreminders.savereminder.REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE
 
 
-const val LOCATION_PERMISSION_INDEX = 0
-const val BACKGROUND_LOCATION_PERMISSION_INDEX = 1
 private const val REQUEST_TURN_DEVICE_LOCATION_ON = 29
 private const val REQUEST_LOCATION_PERMISSION = 1
-const val REQUEST_FOREGROUND_AND_BACKGROUND_PERMISSION_RESULT_CODE = 33
-const val REQUEST_FOREGROUND_ONLY_PERMISSIONS_REQUEST_CODE = 34
+
 private const val GEOFENCE_RADIUS = 200f
 
 
@@ -75,7 +64,8 @@ class SelectLocationFragment : BaseFragment() {
         Log.e("SelectLocationFragment", "OnMapReadyCallback")
 
         googleMap = gMap
-        enableMyLocation()
+        enableLocationOrRequestPermission()
+        zoomToLocation()
         setMapStyle(googleMap)
         setPoiClick(googleMap)
         setMapClick(googleMap)
@@ -99,8 +89,6 @@ class SelectLocationFragment : BaseFragment() {
         mapFragment.getMapAsync(callback)
         fusedLocationProviderClient =
             LocationServices.getFusedLocationProviderClient(requireContext())
-
-
 
         return binding.root
     }
@@ -143,35 +131,67 @@ class SelectLocationFragment : BaseFragment() {
 
 
 
-    /**
-     * Enables the My Location layer if the fine location permission has been granted.
-     */
-
-
-
-//    override fun onRequestPermissionsResult(
-//        requestCode: Int,
-//        permissions: Array<String>,
-//        grantResults: IntArray) {
-//        // Check if location permissions are granted and if so enable the
-//        // location data layer.
-//        if (requestCode == REQUEST_LOCATION_PERMISSION) {
-//            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-//                Toast.makeText(requireContext(), "Permission already granted", Toast.LENGTH_SHORT).show()
-////                enableMyLocation()
-//            } else {
+//    @SuppressLint("MissingPermission")
+//    private fun requestDeviceLocation(resolve:Boolean = true) {
+//        val locationRequest = LocationRequest.create().apply {
+//            priority = LocationRequest.PRIORITY_LOW_POWER
+//        }
+//        val builder = LocationSettingsRequest.Builder().addLocationRequest(locationRequest)
+//        val settingsClient = LocationServices.getSettingsClient(requireActivity())
+//        val locationSettingsResponseTask =
+//            settingsClient.checkLocationSettings(builder.build())
 //
-//                Toast.makeText(requireContext(), "Permission is not granted", Toast.LENGTH_SHORT).show()
+//        locationSettingsResponseTask.addOnFailureListener {
+//                exception ->
+//            if (exception is ResolvableApiException && resolve){
+//                try {
+//                    exception.startResolutionForResult(requireActivity(),
+//                        REQUEST_TURN_DEVICE_LOCATION_ON)
+//                } catch (sendEx: IntentSender.SendIntentException) {
+//                    Log.d(TAG, "Error getting location settings resolution: " + sendEx.message)
+//                }
+//            } else {
+//                Snackbar.make(
+//                    binding.constraintLayout,
+//                    R.string.location_required_error, Snackbar.LENGTH_INDEFINITE
+//                ).setAction(android.R.string.ok) {
+//                    requestDeviceLocation()
+//                }.show()
+//            }
+//        }
+//        locationSettingsResponseTask.addOnCompleteListener {
+//            if ( it.isSuccessful ) {
+//                googleMap.isMyLocationEnabled = true
 //            }
 //        }
 //    }
 
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//        if (requestCode == REQUEST_TURN_DEVICE_LOCATION_ON) {
+//            requestDeviceLocation(true)
+//        }
+//    }
+
+
+
+
+    /**
+     * Enables the My Location layer if the fine location permission has been granted.
+     */
+
+    private fun isForegroundPermissionGranted(): Boolean {
+        return PackageManager.PERMISSION_GRANTED == ActivityCompat.checkSelfPermission(
+            this.requireContext(),
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+    }
 
     @SuppressLint("MissingPermission")
-    private fun enableMyLocation() {
-        if (isPermissionGranted()) {
-            googleMap.setMyLocationEnabled(true)
-            zoomToLocation()
+    private fun enableLocationOrRequestPermission() {
+        if (isForegroundPermissionGranted()) {
+            Log.d(TAG, "Request foreground only location permission")
+            googleMap.isMyLocationEnabled = true
         } else {
             requestPermissions(
                 arrayOf<String>(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -180,9 +200,50 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
-    private fun isPermissionGranted(): Boolean {
-        return ContextCompat.checkSelfPermission(this.requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    @SuppressLint("MissingPermission")
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray) {
+
+        Log.d(TAG, "onRequestPermissionResult")
+        if (
+            (grantResults.isEmpty() &&
+            grantResults[0] == PackageManager.PERMISSION_GRANTED)
+        ) {
+            Log.e("Created error", "granted location permission")
+            Toast.makeText(requireContext(), "Permission is granted", Toast.LENGTH_SHORT)
+                .show()
+            enableLocationOrRequestPermission()
+
+        } else if (grantResults[0] == PackageManager.PERMISSION_DENIED) {
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(
+                    requireActivity(),
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                )
+            ) {
+                //Show permission explanation dialog...
+                Log.e("Created error", "denied permission snackbar")
+                Snackbar.make(
+                    binding.constraintLayout,
+                    R.string.permission_denied_explanation,
+                    Snackbar.LENGTH_INDEFINITE
+                )
+                    .setAction(R.string.settings) {
+                        startActivity(Intent().apply {
+                            action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                            data =
+                                Uri.fromParts("package", BuildConfig.APPLICATION_ID, null)
+                            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                        })
+                    }.show()
+            }
+        } else {
+            Log.e("Created error", "denied permission snackbar")
+
+        }
+
     }
 
     @SuppressLint("MissingPermission")
@@ -200,48 +261,6 @@ class SelectLocationFragment : BaseFragment() {
             }
         }
     }
-
-
-
-
-    @SuppressLint("MissingPermission")
-    override fun onRequestPermissionsResult(requestCode: Int,
-                                            permissions: Array<String>, grantResults: IntArray) {
-        when (requestCode) {
-            LOCATION_PERMISSION_REQUEST_CODE
-
-            -> {
-                // If request is cancelled, the result arrays are empty.
-                if ((grantResults.isNotEmpty() &&
-                            grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                    Toast.makeText(requireContext(), "Permission was granted", Toast.LENGTH_SHORT).show()
-
-                    enableMyLocation()
-
-
-                    // Permission is granted. Continue the action or workflow
-                    // in your app.
-                } else {
-                    Toast.makeText(requireContext(), "Permission is not granted", Toast.LENGTH_SHORT).show()
-                    // Explain to the user that the feature is unavailable because
-                    // the features requires a permission that the user has denied.
-                    // At the same time, respect the user's decision. Don't link to
-                    // system settings in an effort to convince the user to change
-                    // their decision.
-                }
-                return
-            }
-
-            // Add other 'when' lines to check for other
-            // permissions this app might request.
-            else -> {
-                // Ignore all other requests.
-            }
-        }
-    }
-
-
-
 
 
     private fun setMapClick(map: GoogleMap) {
@@ -287,7 +306,7 @@ class SelectLocationFragment : BaseFragment() {
         try {
             val success = map.setMapStyle(
                 MapStyleOptions.loadRawResourceStyle(
-                    context,
+                    requireContext(),
                     R.raw.map_style
                 )
             )
@@ -299,8 +318,5 @@ class SelectLocationFragment : BaseFragment() {
         }
     }
 
-    companion object {
-        private const val LOCATION_PERMISSION_REQUEST_CODE = 1
-    }
 
 }
