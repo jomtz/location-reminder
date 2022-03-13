@@ -44,11 +44,17 @@
     <string name="error_adding_geofence">Error Happened, Can\'t Add Geofence</string>
     <string name="unknown_geofence_error">Unknown error: the Geofence service is not available now</string>
 
+    <!-- Transition type strings -->
+    <string name="geofence_transition_entered">Entered</string>
+    <string name="geofence_transition_exited">Exited</string>
+    <string name="unknown_geofence_transition">Unknown Transition</string>
+
     <!-- Geofence Locations -->
     <string name="golden_gate_bridge_location">at the Golden Gate bridge</string>
     <string name="union_square_location">in Union Square</string>
     <string name="golden_gate_bridge_hint">Go to a bridge with a name that does not match the color that it is!</string>
     <string name="union_square_hint">Go to a square named after Civil War rallies held there, but now known for its amazing shopping!</string>
+
 
     <!-- Permissions -->
     <string name="permission_rationale_location">Access to the location service is required to demonstrate the \'my location\' feature, which shows your current location on the map.</string>

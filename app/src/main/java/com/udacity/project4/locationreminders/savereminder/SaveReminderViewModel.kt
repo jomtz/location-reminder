@@ -1,7 +1,6 @@
 package com.udacity.project4.locationreminders.savereminder
 
 import android.app.Application
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.android.gms.maps.model.PointOfInterest
@@ -21,15 +20,10 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
     val selectedPOI = MutableLiveData<PointOfInterest>()
     val latitude = MutableLiveData<Double>()
     val longitude = MutableLiveData<Double>()
-    var _currentLocationSet = MutableLiveData<Boolean>()
-    val currentLocationSet: LiveData<Boolean>
-        get() = _currentLocationSet
 
     /**
      * Clear the live data objects to start fresh next time the view model gets called
      */
-
-
     fun onClear() {
         reminderTitle.value = null
         reminderDescription.value = null
@@ -39,42 +33,35 @@ class SaveReminderViewModel(val app: Application, val dataSource: ReminderDataSo
         longitude.value = null
     }
 
-    init {
-        _currentLocationSet.value = false
-    }
     /**
      * Validate the entered data then saves the reminder data to the DataSource
      */
-    fun validateAndSaveReminder(reminderData: ReminderDataItem): ReminderDTO? {
-        return if (validateEnteredData(reminderData)) {
+    fun validateAndSaveReminder(reminderData: ReminderDataItem) {
+        if (validateEnteredData(reminderData)) {
             saveReminder(reminderData)
-        } else
-            null
+        }
     }
 
     /**
      * Save the reminder to the data source
      */
-    fun saveReminder(reminderData: ReminderDataItem): ReminderDTO  {
-        val reminderDTO = ReminderDTO(
-            reminderData.title,
-            reminderData.description,
-            reminderData.location,
-            reminderData.latitude,
-            reminderData.longitude,
-            reminderData.id
-        )
+    fun saveReminder(reminderData: ReminderDataItem) {
         showLoading.value = true
         viewModelScope.launch {
             dataSource.saveReminder(
-                reminderDTO
+                ReminderDTO(
+                    reminderData.title,
+                    reminderData.description,
+                    reminderData.location,
+                    reminderData.latitude,
+                    reminderData.longitude,
+                    reminderData.id
+                )
             )
             showLoading.value = false
-//            showSnackBar.value = app.getString(R.string.geofence_added)
             showToast.value = app.getString(R.string.reminder_saved)
             navigationCommand.value = NavigationCommand.Back
         }
-        return reminderDTO
     }
 
     /**
